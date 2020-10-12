@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 //const date = require(__dirname + "/date.js"); // modulo locale
 const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const app = express();
 
@@ -33,6 +34,16 @@ const item3 = new Item ({
 
 const defaultItems = [item1, item2, item3];
 
+const listSchema = {
+	name: {
+		type: String,
+		require: true
+	},
+	items: [itemSchema]
+};
+
+const List = mongoose.model("List", listSchema);
+
 app.get("/", function(req, res) {
 	//const day = date.getDate();
 	Item.find({}, function(err, docs) {
@@ -53,21 +64,70 @@ app.get("/", function(req, res) {
 });
 
 app.post("/", function(req, res) {
-	const item = req.body.newItem;
+	const itemName = req.body.newItem;
+	const listName = req.body.list;
 
-	if(req.body.list == "Work"){
-		workItems.push(item);
-		res.redirect("/work");
-	}else{
-		items.push(item);	
+	const item = new Item({
+		name: itemName
+	});
+
+	if(listName ==="Today"){
+		item.save();// aggiungo alla collection items
 		res.redirect("/");
+	}else {
+		// cerco la lista custom e ci aggiungo l'item
+		List.findOne({name: listName}, function(err, doc) {
+			if(!err){
+				doc.items.push(item);
+				doc.save();
+				res.redirect("/" + listName);
+			}
+		});
 	}
-
 })
 
-app.get("/work", function(req, res) {
-	res.render("list", {listTitle: "Work list", listItems: workItems})
+app.post("/delete", function(req, res) {
+	const checkedItemId = req.body.checkbox;
+	const listName = req.body.listName;
+
+	if(listName === "Today"){
+		// remove item from default list
+		Item.findByIdAndRemove(checkedItemId, function(err) {
+			if(!err){
+				console.log('Document deleted');
+				res.redirect("/");
+			}
+		});
+	}else {
+		// find the custom list and remove the item 
+		List.findOneAndUpdate({name: listName}, {$pull: {items: {_id: checkedItemId}}}, function(err, doc) {
+			if(!err){
+				res.redirect("/" + listName);
+			}
+		});
+	}
 });
+
+app.get("/:costumListName", function(req, res) {
+	const listName = _.capitalize(req.params.costumListName);
+
+	List.findOne({name: listName}, function(err, doc) {
+		if(!err){
+			if(!doc){
+				// creo una nuova lista
+				const list = new List({
+					name: listName,
+					items: defaultItems
+				});
+				list.save();
+
+				res.redirect("/" + listName);
+			}else {
+				res.render("list", {listTitle: listName, listItems: doc.items})
+			}
+		}
+	});
+}); 
 
 app.get("/about", function(req, res) {
 	res.render("about");
