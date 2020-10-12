@@ -22,4 +22,17 @@
 		</form>
 	</div>
 
+	<div class="box" id="heading">
+		<h1>Le tue liste</h1>
+	</div>
+
+	<div class="box">
+		<ul>
+			<% lists.forEach(function(list) { %>
+				<div class="item">
+					<a href="/<%= list.name %>"><p> <%= list.name %></p></a>
+				</div>
+			<% }) %>
+		</ul>
+	</div>
 <%- include("footer") -%>

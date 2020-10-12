@@ -46,6 +46,13 @@ const List = mongoose.model("List", listSchema);
 
 app.get("/", function(req, res) {
 	//const day = date.getDate();
+	let lists = [];
+	List.find({}, function(err, results) {
+		if(!err){
+			lists = results;
+		}
+	});
+
 	Item.find({}, function(err, docs) {
 		if(docs.length === 0){
 			//insert default data
@@ -58,7 +65,7 @@ app.get("/", function(req, res) {
 			});
 			res.redirect("/");
 		}else{
-			res.render('list', {listTitle: "Today", listItems: docs});
+			res.render('list', {listTitle: "Today", listItems: docs, lists: lists});
 		}
 	});
 });
@@ -71,7 +78,7 @@ app.post("/", function(req, res) {
 		name: itemName
 	});
 
-	if(listName ==="Today"){
+	if(listName === "Today"){
 		item.save();// aggiungo alla collection items
 		res.redirect("/");
 	}else {
@@ -111,6 +118,13 @@ app.post("/delete", function(req, res) {
 app.get("/:costumListName", function(req, res) {
 	const listName = _.capitalize(req.params.costumListName);
 
+	let lists = [];
+	List.find({}, function(err, results) {
+		if(!err){
+			lists = results;
+		}
+	});
+
 	List.findOne({name: listName}, function(err, doc) {
 		if(!err){
 			if(!doc){
@@ -123,7 +137,7 @@ app.get("/:costumListName", function(req, res) {
 
 				res.redirect("/" + listName);
 			}else {
-				res.render("list", {listTitle: listName, listItems: doc.items})
+				res.render("list", {listTitle: listName, listItems: doc.items, lists: lists})
 			}
 		}
 	});
