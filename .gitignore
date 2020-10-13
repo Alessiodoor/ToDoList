@@ -1,9 +1,9 @@
 #file con api
 variables.json
 
-#packages 
-package.json
-Package-lock.json
-
 #modules
 node_modules
+
+
+.DS_Store
+npm-debug.log
